@@ -1,0 +1,290 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+enum Role {
+  DENTIST
+  ADMIN
+}
+
+enum Plan {
+  BASIC
+  PROFESSIONAL
+  CLINIC
+}
+
+enum AppointmentStatus {
+  SCHEDULED
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  PARTIAL
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  CARD
+  TRANSFER
+  OTHER
+}
+
+enum ReminderChannel {
+  SMS
+  EMAIL
+  WHATSAPP
+}
+
+enum ReminderStatus {
+  PENDING
+  SENT
+  SIMULATED
+  FAILED
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+}
+
+enum RecurrenceFrequency {
+  WEEKLY
+  BIWEEKLY
+  MONTHLY
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  EXPORT
+}
+
+enum AuditEntity {
+  PATIENT
+  APPOINTMENT
+  PAYMENT
+  REMINDER
+  SETTINGS
+  USER
+}
+
+model User {
+  id             String    @id @default(cuid())
+  name           String
+  email          String    @unique
+  emailVerified  Boolean   @default(false)
+  password       String?
+  image          String?
+  role           Role      @default(DENTIST)
+  clinicName     String?
+  clinicPhone    String?
+  clinicAddress  String?
+  plan           Plan      @default(BASIC)
+  planActive     Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  accounts        Account[]
+  sessions        Session[]
+  patients        Patient[]
+  appointments    Appointment[]
+  payments        Payment[]
+  reminderLogs    ReminderLog[]
+  treatments      Treatment[]
+  recurringRules  RecurringRule[]
+  auditLogs       AuditLog[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Account {
+  id                    String    @id @default(cuid())
+  accountId             String
+  providerId            String
+  userId                String
+  password              String?
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Verification {
+  id         String   @id @default(cuid())
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Patient {
+  id             String    @id @default(cuid())
+  userId         String
+  name           String
+  phone          String
+  email          String?
+  birthDate      DateTime?
+  gender         Gender?
+  notes          String?
+  medicalHistory String?   @default("[]")
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+  payments     Payment[]
+
+  @@index([userId])
+  @@index([userId, name])
+}
+
+// Catálogo de tratamientos del dentista
+model Treatment {
+  id               String   @id @default(cuid())
+  userId           String
+  name             String
+  price            Decimal  @db.Decimal(10, 2)
+  durationMinutes  Int      @default(60)  // duración estimada en minutos
+  color            String?  // color en el calendario (hex)
+  active           Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Appointment {
+  id               String            @id @default(cuid())
+  userId           String
+  patientId        String
+  date             DateTime
+  duration         Int
+  treatment        String
+  treatmentPrice   Decimal?          @db.Decimal(10, 2) // precio al momento de la cita
+  status           AppointmentStatus @default(SCHEDULED)
+  notes            String?
+  reminderSent     Boolean           @default(false)
+  reminderSentAt   DateTime?
+  recurringRuleId  String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+
+  user          User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patient       Patient        @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  recurringRule RecurringRule? @relation(fields: [recurringRuleId], references: [id], onDelete: SetNull)
+  payments      Payment[]
+  reminderLogs  ReminderLog[]
+
+  @@index([userId, date])
+  @@index([userId, status])
+  @@index([recurringRuleId])
+}
+
+model Payment {
+  id            String        @id @default(cuid())
+  userId        String
+  patientId     String
+  appointmentId String?
+  treatment     String
+  amount        Decimal       @db.Decimal(10, 2)
+  status        PaymentStatus @default(PENDING)
+  method        PaymentMethod @default(CASH)
+  notes         String?
+  paidAt        DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  patient     Patient      @relation(fields: [patientId], references: [id], onDelete: Cascade)
+  appointment Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+
+  @@index([userId, status])
+  @@index([userId, createdAt])
+}
+
+model ReminderLog {
+  id             String          @id @default(cuid())
+  userId         String
+  appointmentId  String
+  channel        ReminderChannel
+  recipientPhone String?
+  message        String
+  status         ReminderStatus  @default(PENDING)
+  scheduledFor   DateTime
+  sentAt         DateTime?
+  error          String?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointment Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@unique([appointmentId, channel])
+}
+
+model RecurringRule {
+  id          String               @id @default(cuid())
+  userId      String
+  frequency   RecurrenceFrequency
+  interval    Int                  @default(1)
+  endDate     DateTime?
+  occurrences Int?
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+
+  user         User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  appointments Appointment[]
+
+  @@index([userId])
+}
+
+model AuditLog {
+  id        String      @id @default(cuid())
+  userId    String
+  action    AuditAction
+  entity    AuditEntity
+  entityId  String?
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime    @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([entity, entityId])
+}

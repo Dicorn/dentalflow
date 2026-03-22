@@ -1,0 +1,134 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-geist-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-geist-mono: ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { @apply bg-gray-50 text-gray-900 antialiased; }
+
+/* ─── FullCalendar ─────────────────────────────────────── */
+.fc { font-family: var(--font-geist-sans); }
+
+.fc-toolbar-title {
+  font-size: 0.95rem !important;
+  font-weight: 600 !important;
+  text-transform: capitalize;
+}
+
+/* Toolbar button group — add gap */
+.fc-toolbar-chunk {
+  display: flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+}
+
+/* Remove native button group borders between buttons */
+.fc .fc-button-group {
+  gap: 4px !important;
+}
+.fc .fc-button-group > .fc-button {
+  border-radius: 8px !important;
+  margin: 0 !important;
+}
+
+/* All buttons */
+.fc .fc-button {
+  background: white !important;
+  border: 1px solid #e5e7eb !important;
+  color: #374151 !important;
+  border-radius: 8px !important;
+  font-size: 0.8rem !important;
+  font-weight: 500 !important;
+  padding: 5px 11px !important;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.04) !important;
+  transition: all 0.15s !important;
+}
+
+.fc .fc-button:hover {
+  background: #f9fafb !important;
+  border-color: #d1d5db !important;
+}
+
+.fc .fc-button:focus {
+  box-shadow: 0 0 0 2px rgba(20,184,151,0.2) !important;
+}
+
+/* Active / selected view button */
+.fc .fc-button-active {
+  background: #14b897 !important;
+  border-color: #0d937b !important;
+  color: white !important;
+}
+
+/* Prev / next arrows */
+.fc .fc-prev-button,
+.fc .fc-next-button {
+  padding: 5px 9px !important;
+}
+
+/* Today button */
+.fc .fc-today-button {
+  background: #f3f4f6 !important;
+  color: #6b7280 !important;
+  border-color: #e5e7eb !important;
+}
+
+.fc-timegrid-slot { height: 40px !important; }
+
+/* Events */
+.fc-event {
+  cursor: pointer !important;
+  border-radius: 6px !important;
+  border: none !important;
+  padding: 2px 6px !important;
+  font-size: 0.72rem !important;
+  font-weight: 500 !important;
+  margin: 1px 3px !important;
+  transition: transform 0.1s, box-shadow 0.1s !important;
+}
+
+.fc-event:hover {
+  opacity: 0.92 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.15) !important;
+}
+
+.fc-timegrid-event {
+  border-radius: 6px !important;
+  margin-right: 4px !important;
+}
+
+.fc-event-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fc-event-time { font-size: 0.68rem !important; opacity: 0.85; }
+
+.fc-col-header-cell {
+  padding: 8px 0 !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+}
+.fc-col-header-cell-cushion {
+  color: #6b7280 !important;
+  text-decoration: none !important;
+}
+
+.fc-timegrid-axis { font-size: 0.72rem !important; color: #9ca3af !important; }
+.fc-day-today { background-color: rgba(20,184,151,0.035) !important; }
+.fc-now-indicator-line { border-color: #ef4444 !important; }
+
+/* ─── Scrollbar ─────────────────────────────────────────── */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+
+/* ─── Animations ────────────────────────────────────────── */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in { animation: fadeIn 0.3s ease forwards; }
