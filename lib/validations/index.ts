@@ -19,7 +19,7 @@ export const patientSchema = z.object({
 export const patientUpdateSchema = patientSchema.partial();
 
 // Appointment
-export const appointmentSchema = z 
+export const appointmentSchema = z
   .object({
     patientId: z.string().min(1, "Seleccione un paciente"),
     date: z.string().min(1, "Seleccione una fecha"),
