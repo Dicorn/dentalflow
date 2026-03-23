@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, CalendarCheck, Users, Bell } from "lucide-react";
 
 export function HeroSection() {
@@ -79,12 +80,17 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* App screenshot placeholder */}
+      {/* App screenshot */}
       <div className="max-w-5xl mx-auto px-6 mt-16">
-        <div className="rounded-2xl bg-gradient-to-br from-gray-900 to-gray-800 shadow-2xl aspect-video flex items-center justify-center">
-          <div className="text-center text-white/40">
-            <p className="text-sm">Vista previa del dashboard</p>
-          </div>
+        <div className="rounded-2xl shadow-2xl overflow-hidden border border-gray-200">
+          <Image
+            src="/denta_dashboard.jpg"
+            alt="Vista previa del dashboard de DentalFlow"
+            width={1280}
+            height={720}
+            className="w-full h-auto"
+            priority
+          />
         </div>
       </div>
     </section>
