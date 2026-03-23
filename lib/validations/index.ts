@@ -40,19 +40,7 @@ export const appointmentSchema = z
       path: ["endTime"],
     }
   )
-  .refine(
-    (data) => {
-      if (!data.date) return true;
-      const selected = new Date(data.date + "T00:00:00");
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      return selected >= today;
-    },
-    {
-      message: "La fecha no puede ser en el pasado",
-      path: ["date"],
-    }
-  );
+;
 
 // Recurring appointment
 export const recurringAppointmentSchema = z.object({

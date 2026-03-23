@@ -152,7 +152,21 @@ export function AppointmentModal({ defaultDate, defaultStartTime, defaultEndTime
               )}
             />
 
-            <FieldInput {...register("date")} type="date" label="Fecha" error={errors.date?.message} />
+            <FieldInput
+              {...register("date", {
+                validate: (val) => {
+                  if (!val) return true;
+                  const selected = new Date(val + "T00:00:00");
+                  const today = new Date();
+                  today.setHours(0, 0, 0, 0);
+                  return selected >= today || "La fecha no puede ser en el pasado";
+                },
+              })}
+              type="date"
+              label="Fecha"
+              min={today}
+              error={errors.date?.message}
+            />
 
             <div className="grid grid-cols-2 gap-3">
               <FieldInput {...register("startTime")} type="time" label="Hora inicio" error={errors.startTime?.message} />
