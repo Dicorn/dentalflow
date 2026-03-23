@@ -43,7 +43,7 @@ export const appointmentSchema = z
   .refine(
     (data) => {
       if (!data.date) return true;
-      const selected = new Date(data.date);
+      const selected = new Date(data.date + "T00:00:00");
       const today = new Date();
       today.setHours(0, 0, 0, 0);
       return selected >= today;
