@@ -6,21 +6,30 @@ import {
   startOfDay, endOfDay, startOfWeek, endOfWeek,
   startOfMonth, endOfMonth, subMonths, format, addDays, subDays,
 } from "date-fns";
+import { toZonedTime, fromZonedTime } from "date-fns-tz";
 import { es } from "date-fns/locale";
+
+const TZ = "America/Lima"; // TODO: obtener del perfil del usuario para multi-tenant
 
 export async function getDashboardStats() {
   const session = await requireAuth();
   const userId = session.user.id;
   const now = new Date();
 
-  const monthStart = startOfMonth(now);
-  const monthEnd = endOfMonth(now);
-  const lastMonthStart = startOfMonth(subMonths(now, 1));
-  const lastMonthEnd = endOfMonth(subMonths(now, 1));
-  const weekStart = startOfWeek(now, { weekStartsOn: 1 });
-  const weekEnd = endOfWeek(now, { weekStartsOn: 1 });
-  const sixMonthsAgo = startOfMonth(subMonths(now, 5));
-  const ninetyDaysAgo = subDays(now, 90);
+  // Convertir "ahora" a hora Lima para calcular rangos correctos
+  const nowTZ = toZonedTime(now, TZ);
+
+  const monthStart = fromZonedTime(startOfMonth(nowTZ), TZ);
+  const monthEnd = fromZonedTime(endOfMonth(nowTZ), TZ);
+  const lastMonthStart = fromZonedTime(startOfMonth(subMonths(nowTZ, 1)), TZ);
+  const lastMonthEnd = fromZonedTime(endOfMonth(subMonths(nowTZ, 1)), TZ);
+  const weekStart = fromZonedTime(startOfWeek(nowTZ, { weekStartsOn: 1 }), TZ);
+  const weekEnd = fromZonedTime(endOfWeek(nowTZ, { weekStartsOn: 1 }), TZ);
+  const sixMonthsAgo = fromZonedTime(startOfMonth(subMonths(nowTZ, 5)), TZ);
+  const ninetyDaysAgo = fromZonedTime(subDays(nowTZ, 90), TZ);
+  const todayStart = fromZonedTime(startOfDay(nowTZ), TZ);
+  const todayEnd = fromZonedTime(endOfDay(nowTZ), TZ);
+  const tomorrowStart = fromZonedTime(startOfDay(addDays(nowTZ, 1)), TZ);
 
   const [
     todayCount,
@@ -43,7 +52,7 @@ export async function getDashboardStats() {
     activePatientIds,
   ] = await Promise.all([
     prisma.appointment.count({
-      where: { userId, date: { gte: startOfDay(now), lte: endOfDay(now) } },
+      where: { userId, date: { gte: todayStart, lte: todayEnd } },
     }),
     prisma.appointment.count({
       where: { userId, date: { gte: weekStart, lte: weekEnd }, status: { not: "CANCELLED" } },
@@ -62,12 +71,12 @@ export async function getDashboardStats() {
       where: { userId, status: "NO_SHOW", date: { gte: monthStart, lte: monthEnd } },
     }),
     prisma.appointment.findMany({
-      where: { userId, date: { gte: startOfDay(now), lte: endOfDay(now) }, status: { not: "CANCELLED" } },
+      where: { userId, date: { gte: todayStart, lte: todayEnd }, status: { not: "CANCELLED" } },
       orderBy: { date: "asc" },
       include: { patient: { select: { id: true, name: true, phone: true, email: true } } },
     }),
     prisma.appointment.findMany({
-      where: { userId, date: { gte: startOfDay(addDays(now, 1)) }, status: { in: ["SCHEDULED", "CONFIRMED"] } },
+      where: { userId, date: { gte: tomorrowStart }, status: { in: ["SCHEDULED", "CONFIRMED"] } },
       orderBy: { date: "asc" },
       take: 5,
       include: { patient: { select: { id: true, name: true, phone: true, email: true } } },
@@ -130,22 +139,22 @@ export async function getDashboardStats() {
 
   // Agrupar pagos por mes en memoria
   const monthlyRevenue = Array.from({ length: 6 }, (_, i) => {
-    const month = subMonths(now, 5 - i);
-    const mStart = startOfMonth(month);
-    const mEnd = endOfMonth(month);
+    const monthTZ = subMonths(nowTZ, 5 - i);
+    const mStart = fromZonedTime(startOfMonth(monthTZ), TZ);
+    const mEnd = fromZonedTime(endOfMonth(monthTZ), TZ);
     const revenue = last6MonthsPayments
       .filter((p) => p.paidAt && p.paidAt >= mStart && p.paidAt <= mEnd)
       .reduce((sum, p) => sum + Number(p.amount), 0);
-    return { month: format(month, "MMM", { locale: es }), revenue };
+    return { month: format(monthTZ, "MMM", { locale: es }), revenue };
   });
 
-  // Agrupar citas por día en memoria
+  // Agrupar citas por día en memoria (con rangos en hora Lima)
   const weeklyAppointments = Array.from({ length: 7 }, (_, i) => {
-    const day = addDays(weekStart, i);
-    const dStart = startOfDay(day);
-    const dEnd = endOfDay(day);
+    const dayTZ = addDays(toZonedTime(weekStart, TZ), i);
+    const dStart = fromZonedTime(startOfDay(dayTZ), TZ);
+    const dEnd = fromZonedTime(endOfDay(dayTZ), TZ);
     const count = weekAppointmentsRaw.filter((a) => a.date >= dStart && a.date <= dEnd).length;
-    return { day: format(day, "EEE", { locale: es }), count };
+    return { day: format(dayTZ, "EEE", { locale: es }), count };
   });
 
   return {
