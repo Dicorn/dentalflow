@@ -12,6 +12,7 @@ import { FieldInput, FieldTextarea } from "@/components/ui/FieldComponents";
 import { PatientSearchInput } from "@/components/ui/PatientSearchInput";
 import { TreatmentSearchInput } from "@/components/ui/TreatmentSearchInput";
 import { formatCurrency } from "@/lib/utils";
+import { getBrowserTimezone } from "@/lib/timezone";
 import type { AppointmentWithPatient } from "@/types";
 
 interface Props {
@@ -23,6 +24,7 @@ interface Props {
 }
 
 export function AppointmentModal({ defaultDate, defaultStartTime, defaultEndTime, onClose, onSaved }: Props) {
+  const userTimezone = getBrowserTimezone();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedPrice, setSelectedPrice] = useState<number | null>(null);
@@ -42,6 +44,7 @@ export function AppointmentModal({ defaultDate, defaultStartTime, defaultEndTime
         endTime: defaultEndTime ?? "10:00",
         status: "SCHEDULED",
         treatmentPrice: undefined,
+        timezone: userTimezone,
       },
     });
 

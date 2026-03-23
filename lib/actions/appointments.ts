@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireAuth } from "@/lib/auth-server";
 import { appointmentSchema } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
+import { toUTC } from "@/lib/timezone";
 import { z } from "zod";
 
 const createAppointmentSchema = appointmentSchema;
@@ -19,6 +20,7 @@ const updateAppointmentSchema = z.object({
     .enum(["SCHEDULED", "CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW"])
     .optional(),
   notes: z.string().optional(),
+  timezone: z.string().optional(),
 });
 
 export async function createAppointment(raw: unknown) {
@@ -30,8 +32,9 @@ export async function createAppointment(raw: unknown) {
   }
   const data = parsed.data;
 
-  const appointmentDate = new Date(`${data.date}T${data.startTime}:00Z`);
-  const endDate = new Date(`${data.date}T${data.endTime}:00Z`);
+  const tz = data.timezone ?? "America/Lima";
+  const appointmentDate = toUTC(data.date, data.startTime, tz);
+  const endDate = toUTC(data.date, data.endTime, tz);
   const duration = Math.round(
     (endDate.getTime() - appointmentDate.getTime()) / 60000
   );
@@ -130,8 +133,9 @@ export async function updateAppointment(id: string, raw: unknown) {
     const updateData: Record<string, unknown> = {};
 
     if (data.date && data.startTime && data.endTime) {
-      const appointmentDate = new Date(`${data.date}T${data.startTime}:00Z`);
-      const endDate = new Date(`${data.date}T${data.endTime}:00Z`);
+      const tz = data.timezone ?? "America/Lima";
+      const appointmentDate = toUTC(data.date, data.startTime, tz);
+      const endDate = toUTC(data.date, data.endTime, tz);
       const duration = Math.round(
         (endDate.getTime() - appointmentDate.getTime()) / 60000
       );

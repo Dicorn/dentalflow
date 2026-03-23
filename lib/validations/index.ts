@@ -29,6 +29,7 @@ export const appointmentSchema = z
     treatmentPrice: z.number().min(0).optional(),
     status: z.enum(["SCHEDULED", "CONFIRMED", "COMPLETED", "CANCELLED", "NO_SHOW"]),
     notes: z.string().optional(),
+    timezone: z.string().default("America/Lima"),
   })
   .refine(
     (data) => {
@@ -51,6 +52,7 @@ export const recurringAppointmentSchema = z.object({
   treatment: z.string().min(2, "Ingrese el tratamiento"),
   treatmentPrice: z.number().min(0).optional(),
   notes: z.string().optional(),
+  timezone: z.string().default("America/Lima"),
   isRecurring: z.boolean().default(false),
   frequency: z.enum(["WEEKLY", "BIWEEKLY", "MONTHLY"]).optional(),
   occurrences: z.number().int().min(2).max(52).optional(),

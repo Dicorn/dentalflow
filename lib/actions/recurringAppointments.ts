@@ -5,6 +5,7 @@ import { requireAuth } from "@/lib/auth-server";
 import { recurringAppointmentSchema } from "@/lib/validations";
 import { createAuditLog } from "@/lib/audit";
 import { addWeeks, addMonths } from "date-fns";
+import { toUTC } from "@/lib/timezone";
 
 function generateDates(
   start: Date,
@@ -37,8 +38,9 @@ export async function createRecurringAppointments(raw: unknown) {
   }
   const data = parsed.data;
 
-  const firstDate = new Date(`${data.date}T${data.startTime}:00Z`);
-  const endTime = new Date(`${data.date}T${data.endTime}:00Z`);
+  const tz = data.timezone ?? "America/Lima";
+  const firstDate = toUTC(data.date, data.startTime, tz);
+  const endTime = toUTC(data.date, data.endTime, tz);
   const duration = Math.round((endTime.getTime() - firstDate.getTime()) / 60000);
 
   if (duration <= 0) return { error: "La duración debe ser mayor a 0 minutos" };

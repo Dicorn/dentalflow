@@ -1,12 +1,12 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import {
-  format,
   formatDistanceToNow,
   isToday,
   isTomorrow,
   isYesterday,
 } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { es } from "date-fns/locale";
 import type { AppointmentStatus, PaymentStatus } from "@/types";
 
@@ -14,23 +14,16 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Interpreta fechas como UTC puro (las citas se guardan con Z — sin conversión de zona horaria)
-function asUTC(date: Date | string): Date {
-  const d = new Date(date);
-  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+export function formatDate(date: Date | string, tz = "America/Lima"): string {
+  return formatInTimeZone(new Date(date), tz, "dd/MM/yyyy", { locale: es });
 }
 
-export function formatDate(date: Date | string): string {
-  return format(asUTC(date), "dd/MM/yyyy", { locale: es });
+export function formatTime(date: Date | string, tz = "America/Lima"): string {
+  return formatInTimeZone(new Date(date), tz, "HH:mm", { locale: es });
 }
 
-export function formatTime(date: Date | string): string {
-  const d = new Date(date);
-  return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
-}
-
-export function formatDateTime(date: Date | string): string {
-  return `${formatDate(date)} ${formatTime(date)}`;
+export function formatDateTime(date: Date | string, tz = "America/Lima"): string {
+  return formatInTimeZone(new Date(date), tz, "dd/MM/yyyy HH:mm", { locale: es });
 }
 
 export function formatCurrency(amount: number): string {
@@ -50,12 +43,12 @@ export function getInitials(name: string | null | undefined): string {
     .toUpperCase();
 }
 
-export function getRelativeDay(date: Date | string): string {
-  const d = asUTC(date);
-  if (isToday(d)) return "Hoy";
-  if (isTomorrow(d)) return "Mañana";
-  if (isYesterday(d)) return "Ayer";
-  return format(d, "EEEE dd/MM", { locale: es });
+export function getRelativeDay(date: Date | string, tz = "America/Lima"): string {
+  const tzDate = new Date(formatInTimeZone(new Date(date), tz, "yyyy-MM-dd'T'HH:mm:ss"));
+  if (isToday(tzDate)) return "Hoy";
+  if (isTomorrow(tzDate)) return "Mañana";
+  if (isYesterday(tzDate)) return "Ayer";
+  return formatInTimeZone(new Date(date), tz, "EEEE dd/MM", { locale: es });
 }
 
 export function getRelativeTime(date: Date | string): string {
@@ -116,7 +109,7 @@ export function buildReminderMessage(
   date: Date | string,
   treatment: string
 ): string {
-  const dateStr = format(asUTC(date), "EEEE dd 'de' MMMM", { locale: es });
+  const dateStr = formatInTimeZone(new Date(date), "America/Lima", "EEEE dd 'de' MMMM", { locale: es });
   const timeStr = formatTime(date);
   return `Hola ${patientName}, le recordamos su cita en ${clinicName} el ${dateStr} a las ${timeStr} para ${treatment}. Por favor confirme su asistencia respondiendo este mensaje.`;
 }
