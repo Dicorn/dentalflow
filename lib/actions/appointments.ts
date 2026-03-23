@@ -30,8 +30,8 @@ export async function createAppointment(raw: unknown) {
   }
   const data = parsed.data;
 
-  const appointmentDate = new Date(`${data.date}T${data.startTime}:00-05:00`);
-  const endDate = new Date(`${data.date}T${data.endTime}:00-05:00`);
+  const appointmentDate = new Date(`${data.date}T${data.startTime}:00Z`);
+  const endDate = new Date(`${data.date}T${data.endTime}:00Z`);
   const duration = Math.round(
     (endDate.getTime() - appointmentDate.getTime()) / 60000
   );
@@ -130,8 +130,8 @@ export async function updateAppointment(id: string, raw: unknown) {
     const updateData: Record<string, unknown> = {};
 
     if (data.date && data.startTime && data.endTime) {
-      const appointmentDate = new Date(`${data.date}T${data.startTime}:00-05:00`);
-      const endDate = new Date(`${data.date}T${data.endTime}:00-05:00`);
+      const appointmentDate = new Date(`${data.date}T${data.startTime}:00Z`);
+      const endDate = new Date(`${data.date}T${data.endTime}:00Z`);
       const duration = Math.round(
         (endDate.getTime() - appointmentDate.getTime()) / 60000
       );

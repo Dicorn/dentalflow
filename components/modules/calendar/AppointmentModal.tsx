@@ -29,7 +29,7 @@ export function AppointmentModal({ defaultDate, defaultStartTime, defaultEndTime
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurringResult, setRecurringResult] = useState<{ created: number; skipped: number } | null>(null);
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date().toLocaleDateString("en-CA"); // YYYY-MM-DD en zona horaria local
 
   const { register, handleSubmit, control, setValue, formState: { errors } } =
     useForm<AppointmentFormData>({

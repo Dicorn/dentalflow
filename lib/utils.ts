@@ -14,16 +14,23 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+// Interpreta fechas como UTC puro (las citas se guardan con Z — sin conversión de zona horaria)
+function asUTC(date: Date | string): Date {
+  const d = new Date(date);
+  return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
+}
+
 export function formatDate(date: Date | string): string {
-  return format(new Date(date), "dd/MM/yyyy", { locale: es });
+  return format(asUTC(date), "dd/MM/yyyy", { locale: es });
 }
 
 export function formatTime(date: Date | string): string {
-  return format(new Date(date), "HH:mm", { locale: es });
+  const d = new Date(date);
+  return `${String(d.getUTCHours()).padStart(2, "0")}:${String(d.getUTCMinutes()).padStart(2, "0")}`;
 }
 
 export function formatDateTime(date: Date | string): string {
-  return format(new Date(date), "dd/MM/yyyy HH:mm", { locale: es });
+  return `${formatDate(date)} ${formatTime(date)}`;
 }
 
 export function formatCurrency(amount: number): string {
@@ -44,7 +51,7 @@ export function getInitials(name: string | null | undefined): string {
 }
 
 export function getRelativeDay(date: Date | string): string {
-  const d = new Date(date);
+  const d = asUTC(date);
   if (isToday(d)) return "Hoy";
   if (isTomorrow(d)) return "Mañana";
   if (isYesterday(d)) return "Ayer";
@@ -109,8 +116,7 @@ export function buildReminderMessage(
   date: Date | string,
   treatment: string
 ): string {
-  const d = new Date(date);
-  const dateStr = format(d, "EEEE dd 'de' MMMM", { locale: es });
-  const timeStr = format(d, "HH:mm", { locale: es });
+  const dateStr = format(asUTC(date), "EEEE dd 'de' MMMM", { locale: es });
+  const timeStr = formatTime(date);
   return `Hola ${patientName}, le recordamos su cita en ${clinicName} el ${dateStr} a las ${timeStr} para ${treatment}. Por favor confirme su asistencia respondiendo este mensaje.`;
 }

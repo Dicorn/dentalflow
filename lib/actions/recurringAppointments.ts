@@ -37,8 +37,8 @@ export async function createRecurringAppointments(raw: unknown) {
   }
   const data = parsed.data;
 
-  const firstDate = new Date(`${data.date}T${data.startTime}:00-05:00`);
-  const endTime = new Date(`${data.date}T${data.endTime}:00-05:00`);
+  const firstDate = new Date(`${data.date}T${data.startTime}:00Z`);
+  const endTime = new Date(`${data.date}T${data.endTime}:00Z`);
   const duration = Math.round((endTime.getTime() - firstDate.getTime()) / 60000);
 
   if (duration <= 0) return { error: "La duración debe ser mayor a 0 minutos" };
